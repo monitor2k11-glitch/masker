@@ -1,0 +1,328 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sensitive Data Masking Utility</title>
+<style>
+:root{--bg:#e4e6e9;--card:#fff;--ink:#111;--mut:#4b5058;--line:#c0c4c9;--nav:#0d0d0d;--acc:#8b1116;--bad:#BC2023;--warn:#8a5a00;--ok:#0C6B37;--page:linear-gradient(180deg,#c9cdd2,#e4e6e9 300px);--hdr:linear-gradient(90deg,#000,#3a0709 50%,#8b1116)}
+[data-theme=dark]{--bg:#0b0b0c;--card:#1b1b1e;--ink:#f2f2f2;--mut:#b8bcc2;--line:#3a3d42;--nav:#000;--acc:#e5484d;--bad:#ff8a80;--warn:#F8B324;--ok:#5fd68c;--page:#0b0b0c;--hdr:linear-gradient(90deg,#000,#26282c)}
+[data-theme=crimson]{--bg:#1a0a0b;--card:#2a1214;--ink:#f6eaea;--mut:#c9a9aa;--line:#4d2427;--nav:#120405;--acc:#ff5a5f;--bad:#ff8a80;--warn:#F8B324;--ok:#5fd68c;--page:#1a0a0b;--hdr:linear-gradient(90deg,#2a0507,#8b1116)}
+[data-theme=slate]{--bg:#e9edf2;--card:#fff;--ink:#1b2430;--mut:#4f5b6a;--line:#c5cdd8;--nav:#263445;--acc:#33475f;--bad:#BC2023;--warn:#8a5a00;--ok:#0C6B37;--page:linear-gradient(180deg,#d5dce6,#e9edf2 300px);--hdr:linear-gradient(90deg,#1b2430,#33475f)}
+[data-theme=midnight]{--bg:#0e1621;--card:#16212f;--ink:#e6edf5;--mut:#a3b2c4;--line:#2b3b50;--nav:#08101a;--acc:#5aa9e6;--bad:#ff8a80;--warn:#F8B324;--ok:#5fd68c;--page:#0e1621;--hdr:linear-gradient(90deg,#08101a,#1f3a5c)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",Inter,Arial,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--nav);color:#fff;padding:10px 20px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+header h1{font-size:18px;margin:0;margin-right:auto}header span{font-size:12px;opacity:.9}.pill{border:1px solid #5d5858;border-radius:7px;padding:2px 10px;color:#5d5858}
+nav{display:flex;gap:2px;overflow:auto;background:var(--card);border-bottom:1px solid var(--line);padding:0 14px}
+nav button,.tabs button{border:0;background:none;color:var(--mut);padding:11px 14px;cursor:pointer;font:inherit;border-bottom:3px solid transparent;white-space:nowrap}
+nav button[aria-selected=true],.tabs button[aria-selected=true]{color:var(--ink);border-color:var(--acc);font-weight:600}
+main{max-width:1250px;margin:auto;padding:18px}section[hidden]{display:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px #0001}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.stat b{display:block;font-size:24px}.stat{border-left:3px solid var(--acc);padding-left:10px}
+button.b,label.b{background:var(--acc);color:#fff;border:0;border-radius:4px;padding:8px 14px;cursor:pointer;font:inherit;display:inline-block}
+button.b.s,label.b.s{background:none;color:var(--ink);border:1px solid var(--line)}button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:3px solid #f5a623;outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top;word-break:break-word}th{background:var(--bg)}
+.wrap{overflow:auto;max-height:480px}.badge{border:1px solid currentColor;border-radius:4px;padding:0 6px;font-size:12px}
+.Ready,.Applied,.Updated{color:var(--ok)}.Disabled,.Excluded,.Detected{color:var(--mut)}.err,.Failed,.Invalid{color:var(--bad)}.warn,.No{color:var(--warn)}
+input[type=text],input[type=number],select,textarea{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:6px;font:inherit}textarea{width:100%;min-height:90px;font-family:Consolas,monospace}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.steps span{border:0px solid var(--line);border-radius:99px;padding:2px 10px}.steps .on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.two{display:grid;grid-template-columns:260px 1fr;gap:14px}@media(max-width:760px){.two{grid-template-columns:1fr}}
+.tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line)}.tabs button{padding:6px 10px;font-size:13px}
+.cl{max-height:420px;overflow:auto}.cl div{padding:3px 0;border-bottom:1px solid var(--line)}.cl button{width:100%;text-align:left;background:none;border:0;color:var(--ink);cursor:pointer;padding:4px}.cl button.on{background:var(--bg);font-weight:600}
+#toasts{position:fixed;right:14px;bottom:14px;z-index:20;display:grid;gap:6px}.toast{background:var(--nav);color:#fff;padding:10px 14px;border-radius:4px;border-left:5px solid #c0c4c9;max-width:380px}.toast.err{border-color:#ff6b5e}.toast.warn{border-color:#f5c26b}
+dialog{border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);max-width:520px}progress{width:100%}code{background:var(--bg);padding:0 4px}
+header{background:var(--hdr)}header select{font-size:12px;padding:2px 4px;background:#ffffff1f;color:#fff;border:1px solid #c0c4c9;border-radius:3px}header select option{color:#111;background:#fff}
+body{background:var(--page)}
+h2{margin:0 0 10px;font-size:16px;color:var(--acc)}.card{border-top:3px solid var(--acc);border-radius:3px}
+button.b{border:0;border-radius:3px;padding:8px 14px;cursor:pointer;font:inherit;font-weight:600;color:#fff;background:#566679;box-shadow:0 1px 2px #0003;transition:filter .15s,box-shadow .15s}
+button.b:hover:not(:disabled){filter:brightness(1.15);box-shadow:0 3px 8px #0004}button.b:active:not(:disabled){transform:translateY(1px)}
+button.b.src{background:#00A5CF;color:#111}button.b.scan{background:#094A25}button.b.run{background:#228B22}button.b.mask{background:#BC2023}button.b.exp{background:#0C6B37}button.b.del{background:#ED442C;color:#111}button.b.amb{background:#F8B324;color:#111}button.b.yel{background:#FFD400;color:#111}
+button.b.neu{background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.stat{display:block;text-align:left;width:100%;font:inherit;color:var(--ink);cursor:pointer;margin:0;border-left:4px solid var(--a);background:linear-gradient(135deg,color-mix(in srgb,var(--a) 15%,var(--card)),var(--card));transition:transform .12s,box-shadow .12s}
+.stat:hover{transform:translateY(-2px);box-shadow:0 6px 14px #0002}.stat b{color:var(--a)}
+.c0{--a:#8b1116}.c1{--a:#222}.c2{--a:#6b7280}.c3{--a:#BC2023}.c4{--a:#444}.c5{--a:#5a0a0d}.c6{--a:#6b7280}.c7{--a:#8b1116}.dk .c1,.dk .c4{--a:#c0c4c9}
+.steps button{border:1px solid var(--k);background:var(--card);color:var(--ink);border-radius:3px;padding:5px 12px;cursor:pointer;font:inherit}.steps button.on{background:var(--k);color:#fff}.steps button:hover{box-shadow:0 2px 6px #0003}
+#dz{border:2px dashed var(--acc);border-radius:4px;padding:16px;text-align:center;color:var(--mut);margin-bottom:14px;transition:.15s}#dz.over{background:#8b111622;border-style:solid;transform:scale(1.01)}
+.bar{display:grid;grid-template-columns:150px 1fr 40px;align-items:center;gap:8px;width:100%;background:none;border:0;color:var(--ink);cursor:pointer;padding:3px;font:inherit;text-align:left;border-radius:3px}.bar:hover{background:var(--bg)}.bar i{display:block;height:14px;border-radius:2px;transition:width .4s}
+.chip{border-left:4px solid var(--c);background:var(--bg);padding:1px 6px;border-radius:2px;white-space:nowrap}.dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+tbody tr:hover td,tr:hover>td{background:color-mix(in srgb,var(--acc) 9%,transparent)}tr.ex td{opacity:.5;text-decoration:line-through}.sort{cursor:pointer}.sort:hover{color:var(--acc)}
+.nb{display:inline-block;border-radius:4px;padding:0 7px;font-size:12px;font-weight:700;line-height:1.5;margin-left:5px;background:#BC2023;color:#fff}.nb.g{background:#0C6B37;color:#fff}.nb.a{background:#F8B324;color:#111}.nb.r{background:#BC2023;color:#fff}
+nav button[aria-selected=true]{border-color:var(--t)}nav button:hover,.tabs button:hover{background:var(--bg);color:var(--ink)}.tabs button[aria-selected=true]{border-color:var(--c,var(--acc))}
+@keyframes in{from{transform:translateX(30px);opacity:0}}.toast{animation:in .25s}progress{accent-color:var(--acc)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.dk .steps button.on{color:#fff}
+.chip,.tabs button.chosen,td.mk{background:#ffc9c9;color:#4a0709;font-weight:700}.chip{border-radius:2px}.tabs button.chosen{border-bottom-color:#BC2023}
+td.nw{white-space:nowrap;word-break:normal}.mt{color:#e60012;font-weight:700}.dk .mt{color:#ff4d4d}
+#dash button.b{--k:#566679;border-radius:4px;background:linear-gradient(180deg,color-mix(in srgb,var(--k) 78%,#fff),var(--k));color:#fff;padding:6px 12px;font-size:13px}
+#dash button.b.src{--k:#3b3f45}#dash button.b.scan{--k:#8b1116}#dash button.b.run{--k:#6b7280}#dash button.b.mask{--k:#d32f2f}#dash button.b.exp{--k:#c0c4c9;color:#111}#dash button.b.del{--k:#6d0d11;color:#fff}#dash button.b.amb{--k:#8a9099;color:#111}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(620px 420px at 88% -4%,#8b111633,transparent),radial-gradient(520px 420px at -2% 32%,#c0c4c966,transparent),radial-gradient(500px 360px at 60% 105%,#6b728033,transparent)}
+header{border-bottom:1px solid #ffffff2a;box-shadow:0 6px 24px #0004,inset 0 1px 0 #ffffff22;backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%)}
+h2{color:var(--ink);font-size:17px;font-weight:650;letter-spacing:-.01em}
+.card{border:1px solid color-mix(in srgb,var(--line) 60%,#fff);border-radius:16px;background:color-mix(in srgb,var(--card) 70%,transparent);backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);box-shadow:inset 0 1px 0 #ffffffaa,0 10px 30px #00000018,0 1px 3px #0000001a}
+.dk .card{border-color:#ffffff1c;box-shadow:inset 0 1px 0 #ffffff1a,0 10px 30px #0006}
+.stat{position:relative;overflow:hidden;border-radius:16px;border-left:1px solid color-mix(in srgb,var(--line) 60%,#fff);padding:14px 16px;background:linear-gradient(150deg,color-mix(in srgb,var(--a) 20%,transparent),color-mix(in srgb,var(--card) 68%,transparent) 70%)}
+.stat::after{content:"";position:absolute;right:-22px;top:-22px;width:90px;height:90px;border-radius:50%;background:var(--a);opacity:.22;filter:blur(16px);transition:opacity .2s}
+.stat:hover::after{opacity:.4}.stat:hover{transform:translateY(-3px);box-shadow:inset 0 1px 0 #ffffffaa,0 14px 30px #0000002a}
+.stat b{font-size:30px;font-weight:650;letter-spacing:-.02em;line-height:1.15;margin-bottom:2px}.stat{font-size:12.5px;color:var(--mut)}
+button.b{--k:#566679;border-radius:8px;border:1px solid #ffffff55;font-weight:600;letter-spacing:.005em;background:linear-gradient(180deg,color-mix(in srgb,var(--k) 80%,#fff),var(--k));box-shadow:inset 0 1px 0 #ffffff77,0 1px 2px #0003,0 5px 12px color-mix(in srgb,var(--k) 28%,transparent)}
+button.b.src{--k:#00A5CF}button.b.scan{--k:#094A25}button.b.run{--k:#228B22}button.b.mask{--k:#BC2023}button.b.exp{--k:#0C6B37}button.b.del{--k:#ED442C}button.b.amb{--k:#F8B324}button.b.yel{--k:#FFD400}
+button.b.src,button.b.scan,button.b.run,button.b.mask,button.b.exp,button.b.del,button.b.amb,button.b.yel{background:linear-gradient(180deg,color-mix(in srgb,var(--k) 80%,#fff),var(--k))}
+button.b.neu{background:color-mix(in srgb,var(--card) 65%,transparent);color:var(--ink);border:1px solid var(--line);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 #ffffff88,0 1px 2px #0001}
+button.b:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);box-shadow:inset 0 1px 0 #ffffff88,0 8px 18px color-mix(in srgb,var(--k) 35%,transparent)}
+button.b:active:not(:disabled){transform:scale(.98);filter:brightness(.96)}
+nav{margin:14px auto 0;max-width:1214px;padding:4px;gap:4px;border:1px solid color-mix(in srgb,var(--line) 60%,#fff);border-radius:14px;background:color-mix(in srgb,var(--card) 62%,transparent);backdrop-filter:blur(18px) saturate(170%);box-shadow:inset 0 1px 0 #ffffffaa,0 6px 20px #0000001a}
+nav button{border:0;border-radius:10px;padding:8px 14px;font-weight:500}
+nav button[aria-selected=true]{background:color-mix(in srgb,var(--t) 15%,var(--card));box-shadow:inset 0 -3px 0 var(--t),0 1px 4px #0002;font-weight:650}
+.tabs{border:0;gap:4px;padding-bottom:8px}.tabs button{border-radius:8px;border:1px solid transparent;border-bottom:1px solid transparent}
+.tabs button[aria-selected=true]{border-color:var(--c,var(--acc));box-shadow:0 0 0 1px var(--c,var(--acc))}.tabs button[aria-selected=true]:not(.chosen){background:color-mix(in srgb,var(--c,var(--acc)) 14%,var(--card))}
+.steps{gap:8px}.steps button{border-radius:999px;background:color-mix(in srgb,var(--card) 60%,transparent);backdrop-filter:blur(8px);padding:6px 14px;box-shadow:inset 0 1px 0 #ffffff88}
+.steps button.on{background:linear-gradient(180deg,color-mix(in srgb,var(--k) 80%,#fff),var(--k));border-color:#ffffff55;box-shadow:inset 0 1px 0 #ffffff66,0 4px 10px color-mix(in srgb,var(--k) 30%,transparent)}
+#dz{border-radius:16px;background:color-mix(in srgb,var(--card) 50%,transparent);backdrop-filter:blur(12px)}
+.bar{border-radius:10px;padding:5px 8px}.bar i{border-radius:6px;box-shadow:inset 0 1px 0 #ffffff66}
+.wrap{border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--card) 55%,transparent)}.wrap th{position:sticky;top:0;background:color-mix(in srgb,var(--bg) 88%,var(--card));z-index:1}
+.badge{border-radius:999px;padding:0 9px}.chip{border-radius:6px}
+input[type=text],input[type=number],select,textarea{border-radius:9px;padding:7px 10px;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 78%,transparent);box-shadow:inset 0 1px 2px #0001}
+input[type=checkbox]{accent-color:var(--acc);width:16px;height:16px;vertical-align:middle}.cl button{border-radius:8px}
+dialog{border-radius:18px;padding:20px;box-shadow:0 24px 70px #0007;backdrop-filter:blur(24px)}dialog::backdrop{background:#0008;backdrop-filter:blur(6px)}
+.toast{border-radius:12px;background:#1c1c1ee6;backdrop-filter:blur(14px);box-shadow:0 10px 30px #0006}
+progress{height:10px;border-radius:99px;overflow:hidden}progress::-webkit-progress-bar{background:var(--line);border-radius:99px}progress::-webkit-progress-value{background:linear-gradient(90deg,#8b1116,#ED442C);border-radius:99px}
+#dash button.b.done,#dash button.b:disabled{--k:#9aa0a6;color:#4a4f55;filter:grayscale(1);box-shadow:none}#dash button.b.done{opacity:.65}#dash button.b:disabled{opacity:.5}
+#dash button.b.next{outline:4px solid #f5932f73;outline-offset:0px;font-weight:700;animation:ring2 1.8s ease-in-out infinite}@keyframes ring2{50%{outline-color:#d32f2f14}}
+.steps{gap:6px;align-items:center}.steps button{--k:#8b1116;border-radius:5px;padding:5px 12px;display:inline-flex;gap:7px;align-items:center;background:color-mix(in srgb,var(--card) 60%,transparent);border:0px solid var(--line);color:var(--ink)}
+.steps button .n{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:4px;background:var(--line);color:var(--ink);font-size:13px;font-weight:700}
+.steps button.dn{background:linear-gradient(180deg,#a3161b,#8b1116);color:#fff;border-color:#ffffff44}.steps button.dn .n{background:#ffffff33;color:#fff}
+.steps button.cur{border:1px solid #d32f2f;font-weight:700;animation:ring 1.8s ease-in-out infinite;box-shadow:0 0 0 4px #d32f2f33}.steps button.cur .n{background:#d32f2f;color:#fff}
+.steps button:disabled{opacity:.5;filter:grayscale(1);cursor:not-allowed}.arr{color:var(--mut);font-weight:700}.arr.ok{color:#8b1116}.dk .arr.ok{color:#ff6b6b}
+.pbar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:10px 0 4px}.pbar i{display:block;height:100%;background:linear-gradient(90deg,#6d0d11,#d32f2f);transition:width .4s}@keyframes ring{50%{box-shadow:0 0 0 8px #d32f2f10}}
+.steps{flex-wrap:nowrap;gap:3px;overflow-x:auto;padding-bottom:3px}.steps button{padding:6px 7px;font-size:12px;gap:5px;white-space:nowrap;flex:0 0 auto}.steps button .n{min-width:18px;height:18px;font-size:11px}.arr{font-size:12px;flex:none}
+@media print{header,nav,.row,button{display:none!important}}
+</style></head><body>
+<header><h1>Sensitive Data Masking Utility</h1><span class="pill">Local Processing Only</span><span>Folder: <b id="hF">none</b></span><span>Definitions: <b id="hD">none</b></span><select id="thm" aria-label="Theme" title="Theme" onchange="setTheme(this.value)"><option value="silver">Silver</option><option value="dark">Graphite</option><option value="crimson">Crimson</option><option value="slate">Slate</option><option value="midnight">Midnight</option></select></header>
+<nav role="tablist" id="nav"></nav>
+<main>
+<section id="dash"></section><section id="defs" hidden></section><section id="res" hidden></section><section id="mask" hidden></section><section id="rep" hidden></section><section id="enc" hidden></section>
+<section id="help" hidden><div class="card"><h2>Settings</h2>
+<div class="row"><label>Include extensions <input type="text" id="exts" size="60" value=".log,.txt,.csv,.json,.xml,.config,.ini,.yaml,.yml,.properties,.out,.sql"></label></div>
+<div class="row"><label>Excluded folders <input type="text" id="exd" size="30" value="node_modules,.git"></label><label>Max file size (MB) <input type="number" id="maxmb" value="25" min="1" style="width:70px"></label><label><input type="checkbox" id="protdef" checked> Protect definition files from masking</label></div>
+<p>Changes apply the next time you select a folder.</p></div>
+<div class="card"><h2>Help</h2><p><b>Simple CSV:</b> one column, <code>Column Name</code>. Starter rules are attached to known category names. <b>Advanced CSV:</b> <code>Category,Description,Enabled,MatchMode,CaseSensitive,Values,Patterns</code>; separate multiple items with <code>|</code> and escape a literal pipe as <code>\|</code>.</p>
+<p><b>Match modes:</b> <code>exact</code> matches whole values, <code>regex</code>/<code>contextual</code> use patterns. If a pattern has capture groups, only the last participating group is masked (the label stays); otherwise the whole match is replaced. A leading <code>(?i)</code> is converted to the case-insensitive flag.</p>
+<p><b>Overwriting files</b> needs the File System Access API (Edge/Chrome, served from <code>https://</code> or <code>http://localhost</code>; <code>file://</code> often works too). Without it, scanning works and masked files download instead. Run <code>python -m http.server</code> in this folder if needed.</p>
+<p>Overlaps: the longest match wins; ties go to the category listed first. Overlapping losers are counted as conflicts and not applied.</p></div></section>
+</main>
+<div id="toasts" aria-live="polite" role="status"></div>
+<dialog id="dlg"><form method="dialog"><div id="dm"></div><div class="row"><button class="b neu" value="cancel">Cancel</button><button class="b run" value="ok">Continue</button></div></form></dialog>
+<input type="file" id="fdir" webkitdirectory multiple hidden><input type="file" id="ffil" multiple hidden><input type="file" id="fcsv" accept=".csv" hidden><input type="file" id="fjson" accept=".json" hidden><input type="file" id="fenc" accept=".json" hidden><input type="file" id="fdec" accept=".json" hidden>
+<script>
+const $=id=>document.getElementById(id),R=String.raw,VER='1.0.0';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const S={files:[],skipped:[],errors:[],defs:null,src:'none',defName:'',folder:'none',findings:[],sel:new Set(),cat:'All Findings',ed:0,dir:null,conflicts:0,scanned:0,updated:0,seq:0,reveal:new Set(),cancel:false,batch:'',applied:false,scanned_ok:false,rtab:'dash',sort:{k:'',d:1}};
+const KV=R`[^\s,;"']+`;
+const D={'Server Names':{d:'Server hostnames and machine names',m:'exact'},
+'IP Address':{d:'IPv4 addresses',m:'regex',p:[R`\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b`]},
+'Port Number':{d:'Ports in context (port=1433)',m:'contextual',p:[R`(?i)\b(?:listen\s+)?port\s*[:=]?\s*(\d{2,5})\b`]},
+'Service Accounts':{d:'DOMAIN\\svc_x, svc_*, service_*',m:'regex',p:[R`\b[A-Za-z][\w-]*\\(?:svc|service)_[\w.-]+`,R`\b(?:svc|service)_[\w.-]+`]},
+'Passwords':{d:'Secrets in key/value entries',m:'regex',p:[R`(?i)\b(?:password|pwd|passwd|secret|token|api[_-]?key)\s*[:=]\s*(`+KV+')']},
+'UserIDs':{d:'User IDs in context',m:'contextual',p:[R`(?i)\b(?:user[_ ]?id|username)\s*[:=]\s*(`+KV+')']},
+'Licence Number':{d:'Licence keys',m:'contextual',p:[R`(?i)\blicen[cs]e(?:\s*(?:key|number))?\s*[:=]\s*([A-Z0-9-]{8,})`]},
+'Database Names':{d:'Database names in context',m:'contextual',p:[R`(?i)\b(?:database|initial catalog)\s*=\s*(`+KV+')']},
+'DB Instance Names':{d:'SERVER\\INSTANCE names',m:'regex',p:[R`(?i)\b(?:server|data source)\s*=\s*([\w.-]+\\[\w$-]+)`]},
+'Customer Name':{d:'Known customer names only',m:'exact'},
+'Customer ID':{d:'Customer IDs in context',m:'contextual',p:[R`(?i)\bcustomer[_ ]?id\s*[:=]\s*(`+KV+')']},
+'Account Number':{d:'Account numbers in context',m:'contextual',p:[R`(?i)\b(?:account\s*number|acct|account[_ ]?id)\s*[:=]\s*(\d+)`]},
+'Sensitive Data':{d:'User-defined keywords or regex',m:'exact'},
+'Shared Drive Path':{d:'UNC paths',m:'regex',p:[R`\\\\[\w.$-]+\\[^\s;,"']+`]}};
+const SAMPLEV={'Server Names':['SQLPROD01','APP-SERVER-02'],'Customer Name':['Example Customer Ltd']};
+const norm=(c,useDef)=>{const d=useDef&&D[c.name]||{};return{name:String(c.name||'').trim(),enabled:c.enabled!==false,description:c.description??d.d??'',matchMode:c.matchMode||d.m||'exact',caseSensitive:c.caseSensitive===true,values:[...(c.values||SAMPLEV[c.name]&&useDef==='s'&&SAMPLEV[c.name]||[])],patterns:[...(c.patterns||d.p||[])]}};
+const escRe=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function toast(m,t='ok'){const e=document.createElement('div');e.className='toast '+t;e.textContent=(t=='err'?'Error: ':t=='warn'?'Warning: ':'')+m;$('toasts').append(e);setTimeout(()=>e.remove(),6000)}
+function ask(h){return new Promise(r=>{$('dm').innerHTML=h;$('dlg').returnValue='';$('dlg').onclose=()=>r($('dlg').returnValue==='ok');$('dlg').showModal()})}
+const dl=(n,t,m)=>{const a=document.createElement('a');a.href=URL.createObjectURL(t instanceof Blob?t:new Blob([t],{type:m||'text/plain'}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2e3)};
+const fmt=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(1)+' MB';
+const tick=()=>new Promise(r=>setTimeout(r));
+const trunc=s=>s.length>240?s.slice(0,240)+'…':s;
+const protect=v=>v.length<=2?'*'.repeat(v.length):v[0]+'*'.repeat(Math.min(v.length-2,12))+v[v.length-1];
+/* ---- CSV ---- */
+function parseCSV(t){t=t.replace(/^\uFEFF/,'');const rows=[];let r=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}else if(c=='"')q=true;else if(c==','){r.push(f);f=''}else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;r.push(f);f='';rows.push(r);r=[]}else f+=c}
+if(q)throw new Error('Unterminated quoted field');if(f!==''||r.length){r.push(f);rows.push(r)}return rows.filter(x=>x.some(v=>v.trim()))}
+const toCSV=rows=>rows.map(r=>r.map(v=>{v=String(v??'');return/[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')).join('\r\n');
+const split=s=>(s||'').split(/(?<!\\)\|/).map(x=>x.replace(/\\\|/g,'|').trim()).filter(Boolean),join=a=>a.map(x=>x.replace(/\|/g,'\\|')).join('|');
+function defsFromCSV(t){const rows=parseCSV(t);if(rows.length<2)throw new Error('CSV has no data rows');const h=rows[0].map(x=>x.trim().toLowerCase()),ix=n=>h.indexOf(n);
+const ni=ix('column name')>=0?ix('column name'):ix('category');if(ni<0)throw new Error('Header must contain "Column Name" or "Category"');
+return rows.slice(1).map(r=>{const g=n=>ix(n)>=0?r[ix(n)]:undefined,adv=ix('values')>=0||ix('patterns')>=0;
+return norm({name:r[ni],description:g('description')||undefined,enabled:g('enabled')===undefined||g('enabled')==='',matchMode:g('matchmode')||undefined,caseSensitive:/^(true|yes|1)$/i.test(g('casesensitive')||''),values:adv?split(g('values')):undefined,patterns:adv&&g('patterns')?split(g('patterns')):undefined},true)}).map((c,i,a)=>(c.enabled=!/^(false|no|0)$/i.test(rows[i+1][ix('enabled')]||''),c))}
+function validate(defs){const e=[],seen=new Set();if(!defs.categories?.length)return['No categories found'];defs.categories.forEach((c,i)=>{if(!c.name)e.push(`Category ${i+1}: missing name`);else if(seen.has(c.name.toLowerCase()))e.push(`Duplicate category: ${c.name}`);seen.add((c.name||'').toLowerCase());const k=compile(c);if(k.err)e.push(`${c.name}: invalid pattern (${k.err})`)});return e}
+function setDefs(cats,src,name){S.defs={metadata:{version:'1.0',lastUpdated:new Date().toISOString()},categories:cats};S.src=src;S.defName=name;S.sel=new Set(cats.filter(c=>stat(c)=='Ready').map(c=>c.name));S.ed=0;const e=validate(S.defs);e.length?toast(e.join('; '),'warn'):toast(`Loaded ${cats.length} categories from ${name}`);render()}
+function compile(c){const rules=[],ci=!c.caseSensitive,f='gd'+(ci?'i':''),vals=(c.values||[]).filter(Boolean).sort((a,b)=>b.length-a.length);
+try{if(vals.length)rules.push({type:'exact',src:'known values',re:new RegExp('(?<!\\w)(?:'+vals.map(escRe).join('|')+')(?!\\w)',f)});
+for(const p of c.patterns||[]){let s=p,fl=f;if(s.startsWith('(?i)')){s=s.slice(4);if(!fl.includes('i'))fl+='i'}rules.push({type:c.matchMode,src:p,re:new RegExp(s,fl)})}}catch(e){return{rules:[],err:e.message}}return{rules}}
+function stat(c){if(!c.enabled)return'Disabled';const k=compile(c);return k.err?'Invalid pattern':k.rules.length?'Ready':'No values/patterns'}
+/* ---- Files ---- */
+const exts=()=>$('exts').value.toLowerCase().split(',').map(s=>s.trim()).filter(Boolean),exd=()=>$('exd').value.toLowerCase().split(',').map(s=>s.trim());
+async function addFile(o){const file=o.file||await o.handle.getFile(),i=o.name.lastIndexOf('.'),ext=i<0?'':o.name.slice(i).toLowerCase(),skip=r=>S.skipped.push({path:o.path,reason:r});
+if(o.path.split('/').slice(0,-1).some(p=>exd().includes(p.toLowerCase())))return;
+if(!exts().includes(ext))return skip('Extension not included');if(file.size>$('maxmb').value*1048576)return skip('Larger than '+$('maxmb').value+' MB');
+if($('protdef').checked&&/^sensitive(definitions)?\.(csv|json)$/i.test(o.name))return skip('Definition file protected');
+const b=new Uint8Array(await file.slice(0,4096).arrayBuffer());if(b.includes(0))return skip('Binary file');
+S.files.push({...o,file,ext,size:file.size,mod:file.lastModified,inc:true,matches:0,repl:0,status:'Ready',err:''})}
+async function walk(dir,pre){for await(const[n,h]of dir.entries()){if(h.kind=='directory'){if(!exd().includes(n.toLowerCase()))await walk(h,pre+n+'/')}else await addFile({name:n,path:pre+n,handle:h,parent:dir})}}
+function reset(){S.files=[];S.skipped=[];S.errors=[];S.findings=[];S.scanned=0;S.updated=0;S.applied=false;S.scanned_ok=false;S.reviewed=false;S.exported=false}
+async function pickFolder(){if(!window.showDirectoryPicker)return $('fdir').click();try{const d=await showDirectoryPicker({mode:'read'});reset();S.dir=d;S.folder=d.name;await walk(d,'');done()}catch(e){if(e.name!='AbortError')toast(e.message,'err')}}
+async function fromInput(list,isDir){reset();S.dir=null;const a=[...list];S.folder=isDir&&a[0]?a[0].webkitRelativePath.split('/')[0]:a.length+' selected file(s)';for(const f of a)await addFile({name:f.name,path:f.webkitRelativePath||f.name,file:f});toast('Direct overwrite is unavailable in this mode; masked files will download instead.','warn');done()}
+function done(){S.files.length?toast(`${S.files.length} files ready, ${S.skipped.length} skipped`):toast('No compatible files found','warn');render()}
+/* ---- Scan ---- */
+async function doScan(){if(!S.files.length)return toast('No folder selected or no compatible files','warn');if(!S.defs)return toast('Load definitions first','warn');
+const rules=[];S.defs.categories.forEach((c,o)=>{if(!S.sel.has(c.name)||!c.enabled)return;compile(c).rules.forEach(r=>rules.push({c:c.name,o,...r}))});
+if(!rules.length)return toast('No detection rule configured for the selected categories','warn');
+S.findings=[];S.errors=[];S.conflicts=0;S.scanned=0;S.seq=0;S.cancel=false;S.applied=false;S.reviewed=false;S.exported=false;$('prog').hidden=false;const inc=S.files.filter(f=>f.inc);let n=0;
+for(const F of inc){if(S.cancel)break;$('pt').textContent=`${F.path} (${n}/${inc.length})`;$('pb').value=Math.round(n/inc.length*100);F.matches=F.repl=0;F.err='';
+try{const file=F.handle?await F.handle.getFile():F.file;F.mod=file.lastModified;F.size=file.size;const b=await file.arrayBuffer();let text;try{text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(b);F.utf8=true}catch{text=new TextDecoder('windows-1252').decode(b);F.utf8=false}
+scanText(S.files.indexOf(F),F,text,rules);S.scanned++;F.status='Scanned'}catch(e){F.status='Error';F.err=e.message;S.errors.push({path:F.path,msg:e.message})}n++;await tick()}
+$('prog').hidden=true;S.scanned_ok=true;toast(S.cancel?'Scan cancelled':S.findings.length?`Scan complete: ${S.findings.length} findings`:'No findings detected',S.findings.length?'ok':'warn');S.reveal.clear();render()}
+function scanText(fi,F,text,rules){const parts=text.split(/(\r\n|\n|\r)/);
+for(let i=0;i<parts.length;i+=2){const line=parts[i];if(!line)continue;const cand=[];
+for(const r of rules){r.re.lastIndex=0;let m;while((m=r.re.exec(line))){if(m[0]==='')r.re.lastIndex++;let g=0;for(let k=m.length-1;k>0;k--)if(m[k]!==undefined){g=k;break}
+const[s,e]=m.indices[g],v=line.slice(s,e);if(s===e||/^\*\*.+\*\*$/.test(v)||(line.slice(s-2,s)==='**'&&line.slice(e,e+2)==='**'))continue;cand.push({s,e,v,c:r.c,o:r.o,rule:r.src,type:r.type,whole:g===0})}}
+cand.sort((a,b)=>a.s-b.s||(b.e-b.s)-(a.e-a.s)||a.o-b.o);const keep=[];let end=-1;for(const c of cand){if(c.s>=end){keep.push(c);end=c.e}else S.conflicts++}
+let ml=line;for(const k of keep.slice().reverse())ml=ml.slice(0,k.s)+'**'+k.c+'**'+ml.slice(k.e);
+for(const k of keep){F.matches++;S.findings.push({id:'F'+String(++S.seq).padStart(5,'0'),fi,path:F.path,name:F.name,ext:F.ext,ln:i/2+1,col:k.s+1,s:k.s,e:k.e,cat:k.c,rule:k.rule,type:k.type,whole:k.whole,orig:k.v,masked:'**'+k.c+'**',ctx:trunc(ml),after:'',inc:true,status:'Detected',err:'',ts:new Date().toISOString(),mts:'',bak:''})}}}
+/* ---- Mask ---- */
+const planned=()=>S.findings.filter(f=>f.inc&&S.files[f.fi].inc);
+async function applyMask(){const sel=planned();if(!sel.length)return toast('No findings selected for masking','warn');
+const byF=new Map();sel.forEach(f=>{if(!byF.has(f.fi))byF.set(f.fi,[]);byF.get(f.fi).push(f)});
+const mode=$('mode').value==='overwrite'&&S.dir?'overwrite':'download',bk=$('bak').checked;
+if(!await ask(`<h3>Confirm masking</h3><p><b>${byF.size}</b> file(s), <b>${sel.length}</b> replacement(s).</p><p>${mode=='overwrite'?'Original files will be <b>overwritten</b>. Backups: '+(bk?'yes (.bak)':'<b>no</b>'):'Masked copies will be downloaded; originals are untouched.'}</p><p>This cannot be undone automatically except by restoring backups.</p>`))return;
+if(mode=='overwrite'){try{if(await S.dir.requestPermission({mode:'readwrite'})!=='granted')return toast('Write permission denied','err')}catch(e){return toast(e.message,'err')}}
+S.batch='B'+Date.now();S.updated=0;const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+for(const[fi,list]of byF){const F=S.files[fi];
+try{if(!F.utf8)throw new Error('File is not UTF-8; encoding cannot be preserved');const cur=F.handle?await F.handle.getFile():F.file;if(cur.lastModified!==F.mod||cur.size!==F.size)throw new Error('File changed since it was scanned; rescan required');
+const text=new TextDecoder('utf-8',{ignoreBOM:true}).decode(await cur.arrayBuffer()),parts=text.split(/(\r\n|\n|\r)/),lines=new Map();list.forEach(f=>{if(!lines.has(f.ln))lines.set(f.ln,[]);lines.get(f.ln).push(f)});
+for(const[ln,arr]of lines){let l=parts[(ln-1)*2];arr.sort((a,b)=>b.s-a.s);for(const f of arr){if(l.slice(f.s,f.e)!==f.orig)throw new Error(`Line ${ln} no longer matches scan`);l=l.slice(0,f.s)+f.masked+l.slice(f.e)}parts[(ln-1)*2]=l;arr.forEach(f=>f.after=trunc(l))}
+const out=parts.join('');let bn='';
+if(mode=='overwrite'){if(bk){bn=$('bn').value=='ts'?`${F.name}.${stamp}.bak`:F.name+'.bak';try{const w=await(await F.parent.getFileHandle(bn,{create:true})).createWritable();await w.write(cur);await w.close()}catch(e){throw new Error('Backup write failure: '+e.message)}}
+try{const w=await F.handle.createWritable();await w.write(out);await w.close()}catch(e){throw new Error('Output write failure: '+e.message)}F.mod=(await F.handle.getFile()).lastModified}
+else dl(F.name,new Blob([out],{type:'text/plain'}));
+const ts=new Date().toISOString();list.forEach(f=>{f.status='Applied';f.mts=ts;f.bak=bn});F.repl=list.length;F.status='Updated';S.updated++}
+catch(e){list.forEach(f=>{f.status='Failed';f.err=e.message});F.err=e.message;F.status='Error';S.errors.push({path:F.path,msg:e.message});if(!$('cont').checked)break}await tick()}
+S.findings.forEach(f=>{if(!f.inc&&f.status=='Detected')f.status='Excluded'});S.applied=true;
+const fails=S.findings.filter(f=>f.status=='Failed').length;toast(`${S.updated} file(s) updated${fails?`, ${fails} replacement(s) failed`:''}`,fails?'warn':'ok');render()}
+/* ---- Report ---- */
+function repRows(orig){return S.findings.map(f=>({findingId:f.id,batchId:f.mts?S.batch:'',filePath:f.path,fileName:f.name,extension:f.ext,line:f.ln,column:f.col,category:f.cat,ruleType:f.type,rule:f.rule,originalValue:orig?f.orig:`[REDACTED — ${f.orig.length} characters]`,maskedValue:f.masked,originalLine:orig?'(see file)':f.ctx,modifiedLine:f.after||f.ctx,included:f.inc,status:f.status,error:f.err,scanTime:f.ts,maskTime:f.mts,backup:f.bak}))}
+function repSum(){return{reportId:'R'+Date.now(),generated:new Date().toISOString(),definitionSource:S.defName,sourceType:S.src,categories:[...S.sel],filesDiscovered:S.files.length+S.skipped.length,filesScanned:S.scanned,filesSkipped:S.skipped.length,filesChanged:S.updated,replacementsApplied:S.findings.filter(f=>f.status=='Applied').length,excludedFindings:S.findings.filter(f=>!f.inc).length,failedReplacements:S.findings.filter(f=>f.status=='Failed').length,overlapConflicts:S.conflicts,backupEnabled:$('bak')?.checked??true,appVersion:VER,directWriteSupported:!!window.showDirectoryPicker}}
+function exportRep(t){const o=$('orig')?.checked,rows=repRows(o),sum=repSum();if(!rows.length)return toast('Nothing to report; run a scan first','warn');S.exported=true;
+if(t=='csv')dl('audit-report.csv','\uFEFF'+toCSV([Object.keys(rows[0]),...rows.map(r=>Object.values(r))]),'text/csv');
+else if(t=='json')dl('audit-report.json',JSON.stringify({summary:sum,changes:rows},null,2),'application/json');
+else dl('audit-report.html',`<!DOCTYPE html><meta charset=utf-8><title>Audit report</title><style>body{font:13px Segoe UI,Arial}td,th{border:1px solid #bbb;padding:3px 6px;text-align:left}table{border-collapse:collapse}</style><h1>Sensitive Data Masking – Audit Report</h1><table>${Object.entries(sum).map(([k,v])=>`<tr><th>${esc(k)}<td>${esc(Array.isArray(v)?v.join('; '):v)}`).join('')}</table><h2>Changes</h2><table><tr>${Object.keys(rows[0]).map(k=>'<th>'+esc(k)).join('')}${rows.map(r=>'<tr>'+Object.values(r).map(v=>'<td>'+esc(v)).join('')).join('')}</table>`,'text/html')}
+/* ---- Definitions export ---- */
+function defsCSV(){return toCSV([['Category','Description','Enabled','MatchMode','CaseSensitive','Values','Patterns'],...S.defs.categories.map(c=>[c.name,c.description,c.enabled,c.matchMode,c.caseSensitive,join(c.values),join(c.patterns)])])}
+async function saveDefs(kind){if(!S.defs)return toast('Load definitions first','warn');const e=validate(S.defs);if(e.length)return toast(e.join('; '),'err');S.defs.metadata.lastUpdated=new Date().toISOString();
+const txt=kind=='csv'?defsCSV():JSON.stringify(S.defs,null,2),n=kind=='csv'?'SensitiveDefinitions.csv':'SensitiveDefinitions.json';
+if(window.showSaveFilePicker){try{const w=await(await showSaveFilePicker({suggestedName:n})).createWritable();await w.write(txt);await w.close();return toast('Saved '+n)}catch(x){if(x.name=='AbortError')return}}dl(n,txt)}
+/* ---- UI ---- */
+const TABS=[['dash','Dashboard'],['defs','Source Definitions'],['res','Scan Results'],['mask','Mask and Save'],['rep','Audit Report'],['enc','Encryption'],['help','Settings / Help']];
+function showTab(t){S.rtab=t;if(t=='res'&&S.scanned_ok)S.reviewed=true;TABS.forEach(([id])=>{$(id).hidden=id!=t;});render()}
+const THEMES={silver:0,dark:1,crimson:1,slate:0,midnight:1};
+function setTheme(t){const r=document.documentElement;r.dataset.theme=t;r.classList.toggle('dk',!!THEMES[t]);$('thm').value=t;try{localStorage.setItem('theme',t)}catch{}}
+try{setTheme(localStorage.getItem('theme')||'silver')}catch{setTheme('silver')}
+const sb=s=>`<span class="nb ${s=='Ready'?'g':s=='No values/patterns'?'a':'r'}">${s=='Ready'?'✔':s=='No values/patterns'?'▲':'✖'} ${s}</span>`;
+const hl=s=>esc(s).replace(/\*\*([^*]+?)\*\*/g,'<span class="mt">**$1**</span>');
+const PAL=['#8b1116','#222','#6b7280','#BC2023','#094A25','#0C6B37','#228B22','#00A5CF','#F8B324','#ED442C','#FFD400','#555','#a8adb3','#5a0a0d'],cc=n=>{const i=Object.keys(D).indexOf(n);return PAL[i<0?n.length%14:i]};
+const KIND=[[/^(Select Folder|Add files|Load)/,'src'],[/^Apply/,'mask'],[/^(Scan|Rescan)/,'scan'],[/^(Test|Include|Review)/,'run'],[/^(Cancel|Remove|Exclude)/,'del'],[/^(Export|CSV|JSON|HTML|Download|Save|Convert|Encrypt)/,'exp'],[/^(Add category|Select all|Clear|Only|Decrypt|Generate)/,'amb'],[/^Print/,'yel']];
+const btn=(l,f,dis,st)=>{st=st=='next'||st=='done'?st:'';return`<button class="b ${(KIND.find(k=>k[0].test(l))||[0,'neu'])[1]} ${st}" onclick="${f}" ${dis?'disabled title="Not available yet: complete the earlier workflow steps"':st=='done'?'title="Done. Click to repeat this step."':st=='next'?'title="Recommended next step"':''}>${l}</button>`};
+const GO=['showTab("dash")','showTab("defs")','showTab("dash")','showTab("res")','showTab("res")','showTab("rep")','S.cat="Errors";showTab("res")'];
+const STEPGO=['pickFolder()','$("fcsv").click()','$("cf")?.focus()','doScan()','showTab("res")','showTab("mask")','showTab("rep")'];
+const NAMES=['Select folder','Load definitions','Choose categories','Scan files','Review results','Apply masking','Export report'];
+function wf(){const f=S.files.length>0,d=!!S.defs,c=d&&S.sel.size>0,sc=!!S.scanned_ok,fd=S.findings.length>0,done=[f,d,c,sc,sc&&!!S.reviewed,!!S.applied,!!S.exported],avail=[1,1,d,f&&c,sc,sc&&fd,fd].map(Boolean),cur=done.findIndex(x=>!x);return{done,avail,cur:cur<0?7:cur,n:done.filter(Boolean).length}}
+function goCat(c){S.cat=c;showTab('res')}
+function sortBy(k){S.sort=S.sort.k==k?{k,d:-S.sort.d}:{k,d:1};render()}
+function liveQ(el){const p=el.selectionStart;render();const n=$('rq');n.focus();n.setSelectionRange(p,p)}
+async function dropFiles(e){e.preventDefault();e.currentTarget.classList.remove('over');const it=[...e.dataTransfer.items],hp=it[0]?.getAsFileSystemHandle?it[0].getAsFileSystemHandle():null,fl=e.dataTransfer.files;
+const hd=hp?await hp:null;if(hd?.kind=='directory'){reset();S.dir=hd;S.folder=hd.name;await walk(hd,'');return done()}fromInput(fl,false)}
+function fileTable(){if(!S.files.length)return'<p>No files yet. Select a folder to begin.</p>';return`<div class="wrap"><table><tr><th>Use<th>Path<th>Ext<th>Size<th>Modified<th>Status<th>Matches<th>Replaced<th>Error${S.files.slice(0,500).map((f,i)=>`<tr><td><input type="checkbox" aria-label="Include ${esc(f.path)}" ${f.inc?'checked':''} onchange="S.files[${i}].inc=this.checked;render()"><td>${esc(f.path)}<td>${esc(f.ext)}<td>${fmt(f.size)}<td>${new Date(f.mod).toLocaleString()}<td><span class="${f.status}">${f.status}</span><td>${f.matches}<td>${f.repl}<td class="err">${esc(f.err)}`).join('')}</table></div>`}
+function rDash(){const cs=S.defs?.categories||[],has=S.files.length&&S.defs,fl=$('cf')?.value.toLowerCase()||'';const W=wf(),st=i=>W.done[i]?'done':W.cur==i&&W.avail[i]?'next':'';
+const by={};S.findings.forEach(f=>by[f.cat]=(by[f.cat]||0)+1);const mx=Math.max(1,...Object.values(by)),
+chart=Object.keys(by).length?`<div class="card"><h2>Findings by category (click to open)</h2>${Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<button class="bar" data-c="${esc(k)}" onclick="goCat(this.dataset.c)"><span>${esc(k)}</span><i style="width:${v/mx*100}%;background:${cc(k)}"></i><b>${v}</b></button>`).join('')}</div>`:'',
+dz=`<div id="dz" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dropFiles(event)">Drag and drop a folder or files here to load them</div>`;
+$('dash').innerHTML=`<div class="card"><div class="steps">${NAMES.map((s,i)=>`${i?`<span class="arr ${W.done[i-1]?'ok':''}" aria-hidden="true">&gt;</span>`:''}<button class="${W.done[i]?'dn':i==W.cur?'cur':''}" ${W.avail[i]||W.done[i]?'':'disabled'} onclick='${STEPGO[i]}' aria-current="${i==W.cur?'step':'false'}"><span class="n">${i+1}</span>${s}</button>`).join('')}</div>
+<div class="pbar" role="progressbar" aria-label="Workflow progress" aria-valuemin="0" aria-valuemax="7" aria-valuenow="${W.n}"><i style="width:${W.n/7*100}%"></i></div><small>${W.n} of 7 steps complete${W.cur<7&&W.avail[W.cur]?' · next: '+NAMES[W.cur]:''}</small><div class="row">${btn('Select Folder','pickFolder()',0,st(0))}${btn('Add files',"$('ffil').click()",0,st(0))}${btn('Load Sensitive.csv',"$('fcsv').click()",0,st(1))}${btn('Load JSON Definitions',"$('fjson').click()",0,st(1))}${btn('Load sample data','loadSample()',0,W.cur<2?'next':'')}${btn('Scan Files','doScan()',!has,st(3))}${btn('Review Results',"showTab('res')",!S.scanned_ok,st(4))}${btn('Apply Masking',"showTab('mask')",!S.findings.length,st(5))}${btn('Export Report',"showTab('rep')",!S.findings.length,st(6))}</div>
+<div id="prog" hidden><progress id="pb" max="100" value="0"></progress><span id="pt"></span> ${btn('Cancel scan','S.cancel=true',0,'s')}</div></div>
+${dz}<div class="grid">${[['Files selected',S.files.filter(f=>f.inc).length],['Files scanned',S.scanned],['Categories enabled',cs.filter(c=>c.enabled).length],['Values found',S.findings.length],['Files with matches',S.files.filter(f=>f.matches).length],['Files updated',S.updated],['Errors / warnings',S.errors.length+S.skipped.length]].map(([l,v],i)=>`<button class="card stat c${i}" onclick='${GO[i]}'><b>${v}</b>${l}</button>`).join('')}</div>
+${chart}<br><div class="card"><h2>Categories</h2><div class="row"><label>Filter <input type="text" id="cf" value="${esc(fl)}" oninput="rDash();$('cf').focus()"></label>${btn('Select all',"selCats('all')",!S.defs,'s')}${btn('Clear all',"selCats('none')",!S.defs,'s')}${btn('Only with rules',"selCats('ready')",!S.defs,'s')}<b>${S.sel.size} of ${cs.length} categories selected</b></div>
+${cs.length?`<table><tr><th>Use<th>Category<th>Values<th>Patterns<th>Mode<th>Status${cs.filter(c=>c.name.toLowerCase().includes(fl)).map(c=>{const s=stat(c);return`<tr title="${esc(c.description)}"><td><input type="checkbox" aria-label="Select ${esc(c.name)}" ${S.sel.has(c.name)?'checked':''} onchange="this.checked?S.sel.add('${esc(c.name).replace(/'/g,"\\'")}'):S.sel.delete('${esc(c.name).replace(/'/g,"\\'")}');rDash()"><td><span class="dot" style="background:${cc(c.name)}"></span>${esc(c.name)}<td>${c.values.length}<td>${c.patterns.length}<td>${esc(c.matchMode)}<td>${sb(s)}`}).join('')}</table>`:'<p>Load Sensitive.csv or a JSON definitions file (or try the sample data).</p>'}</div>
+<div class="card"><h2>Files</h2>${fileTable()}</div>`}
+function selCats(m){S.sel=new Set(S.defs.categories.filter(c=>m=='all'?c.enabled:m=='ready'?stat(c)=='Ready':false).map(c=>c.name));rDash()}
+function rDefs(){const cs=S.defs?.categories||[],c=cs[S.ed];
+$('defs').innerHTML=`<div class="card"><div class="row">${btn('Load CSV',"$('fcsv').click()")}${btn('Load JSON',"$('fjson').click()",0,'s')}${btn('Add category','addCat()',!S.defs,'s')}${btn('Save JSON','saveDefs(\'json\')',!S.defs,'s')}${btn('Convert / Export CSV','saveDefs(\'csv\')',!S.defs,'s')}${btn('Download JSON',"dl('SensitiveDefinitions.json',JSON.stringify(S.defs,null,2),'application/json')",!S.defs,'s')}</div><p>Source: <b>${esc(S.src)}</b> ${esc(S.defName)}. Starter rules are editable defaults.</p></div>
+${c?`<div class="two"><div class="card cl">${cs.map((x,i)=>`<div><button class="${i==S.ed?'on':''}" onclick="S.ed=${i};rDefs()"><span class="dot" style="background:${cc(x.name)}"></span>${esc(x.name||'(unnamed)')} ${sb(stat(x))}</button></div>`).join('')}</div>
+<div class="card"><div class="row"><label>Name <input type="text" value="${esc(c.name)}" oninput="ed('name',this.value)"></label><label>Match mode <select onchange="ed('matchMode',this.value)">${['exact','regex','contextual'].map(m=>`<option ${m==c.matchMode?'selected':''}>${m}</option>`).join('')}</select></label><label><input type="checkbox" ${c.enabled?'checked':''} onchange="ed('enabled',this.checked)"> Enabled</label><label><input type="checkbox" ${c.caseSensitive?'checked':''} onchange="ed('caseSensitive',this.checked)"> Case sensitive</label></div>
+<label>Description<br><input type="text" style="width:100%" value="${esc(c.description)}" oninput="ed('description',this.value)"></label>
+<p><label>Known values (one per line)<textarea oninput="ed('values',this.value.split(/\\r?\\n/).map(s=>s.trim()).filter(Boolean))">${esc(c.values.join('\n'))}</textarea></label></p>
+<p><label>Regex patterns (one per line; last capture group is masked)<textarea oninput="ed('patterns',this.value.split(/\\r?\\n/).filter(s=>s.trim()))">${esc(c.patterns.join('\n'))}</textarea></label></p>
+<div class="row"><label>Test sample <input type="text" id="ts" size="50" placeholder="Server=SQLPROD01;Password=abc123"></label>${btn('Test rule','testRule()',0,'s')}${btn('Remove category','rmCat()',0,'s')}</div><div id="tr" aria-live="polite"></div></div></div>`:'<div class="card">No definitions loaded.</div>'}`}
+function ed(k,v){S.defs.categories[S.ed][k]=v;if(k=='name'||k=='enabled'){S.sel=new Set([...S.sel].filter(n=>S.defs.categories.some(c=>c.name==n)))}}
+function addCat(){S.defs.categories.push(norm({name:'New Category '+(S.defs.categories.length+1)}));S.ed=S.defs.categories.length-1;rDefs()}
+async function rmCat(){const c=S.defs.categories[S.ed];if(await ask(`<p>Remove category <b>${esc(c.name)}</b>?</p>`)){S.defs.categories.splice(S.ed,1);S.ed=0;render()}}
+function testRule(){const c=S.defs.categories[S.ed],k=compile(c),t=$('ts').value;if(k.err)return $('tr').innerHTML=`<p class="err">✖ Invalid pattern: ${esc(k.err)}</p>`;if(!k.rules.length)return $('tr').innerHTML='<p>No detection rule configured.</p>';
+const o=[];for(const r of k.rules){r.re.lastIndex=0;let m;while((m=r.re.exec(t))){if(m[0]==='')r.re.lastIndex++;let g=0;for(let i=m.length-1;i>0;i--)if(m[i]!==undefined){g=i;break}o.push(`${esc(m.indices[g].join('–'))}: ${esc(m[g])}${g?' (group '+g+' masked)':' (entire match masked)'}`)}}
+$('tr').innerHTML=o.length?'<ul><li>'+o.join('<li>')+'</ul>':'<p>No matches.</p>'}
+function rRes(){const cats=(S.defs?.categories||[]).map(c=>c.name),T=['All Findings',...cats,'Files Summary','Skipped Files','Errors'],cnt=n=>n=='All Findings'?S.findings.length:S.findings.filter(f=>f.cat==n).length,q=($('rq')?.value||'').toLowerCase(),redact=$('rd')?.checked;
+let h=`<div class="card"><div class="tabs" role="tablist">${T.map((t,i)=>`<button role="tab" class="${S.sel.has(t)?'chosen':''}" style="--c:${cc(t)}" aria-selected="${t==S.cat}" onclick="S.cat=${JSON.stringify(t).replace(/"/g,'&quot;')};render()">${esc(t)}${cats.includes(t)||t=='All Findings'?` <span class="nb ${cnt(t)?'r':'g'}">${cnt(t)}</span>`:''}</button>`).join('')}</div>`;
+if(S.cat=='Files Summary')h+=fileTable();
+else if(S.cat=='Skipped Files')h+=S.skipped.length?`<table><tr><th>File<th>Reason${S.skipped.map(s=>`<tr><td>${esc(s.path)}<td>${esc(s.reason)}`).join('')}</table>`:'<p>No skipped files.</p>';
+else if(S.cat=='Errors')h+=S.errors.length?`<table><tr><th>File<th>Message${S.errors.map(s=>`<tr><td>${esc(s.path)}<td class="err">✖ ${esc(s.msg)}`).join('')}</table>`:'<p>No errors.</p>';
+else{const c=S.defs?.categories.find(x=>x.name==S.cat);let L=S.findings.filter(f=>(S.cat=='All Findings'||f.cat==S.cat)&&(!q||(f.path+f.cat+f.ctx+(redact?'':f.orig)).toLowerCase().includes(q)));
+h+=`<div class="row"><label>Search <input type="text" id="rq" value="${esc($('rq')?.value||'')}" oninput="liveQ(this)"></label><label><input type="checkbox" id="rd" ${redact?'checked':''} onchange="render()"> Redact all values in UI</label>${btn('Include all shown','tog(true)',!L.length,'s')}${btn('Exclude all shown','tog(false)',!L.length,'s')}${btn('Download scan-only results','exportRep(\'csv\')',!S.findings.length,'s')}</div>`;
+if(S.sort.k)L=[...L].sort((a,b)=>(a[S.sort.k]>b[S.sort.k]?1:-1)*S.sort.d);if(c&&stat(c)=='No values/patterns')h+='<p class="warn">No detection rule configured for this category.</p>';
+h+=L.length?`<div class="wrap"><table><tr><th>Include${[['cat','Category'],['path','File'],['ln','Line'],['col','Col'],['orig','Original'],['ctx','Context (masked)']].map(([k,l])=>`<th class="sort" tabindex="0" role="button" onclick="sortBy('${k}')" onkeydown="if(event.key=='Enter')sortBy('${k}')">${l}${S.sort.k==k?(S.sort.d>0?' ▲':' ▼'):''}`).join('')}${L.slice(0,300).map(f=>{const i=S.findings.indexOf(f),pw=f.cat=='Passwords'&&!S.reveal.has(f.id);return`<tr class="${f.inc?'':'ex'}"><td><input type="checkbox" aria-label="Include finding ${f.id}" ${f.inc?'checked':''} onchange="S.findings[${i}].inc=this.checked;this.closest('tr').classList.toggle('ex',!this.checked)"><td><span class="chip" style="--c:${cc(f.cat)}">${esc(f.cat)}</span><td class="nw">${esc(f.path)}<td class="nw">${f.ln}<td class="nw">${f.col}<td class="nw">${esc(pw||redact?protect(f.orig):f.orig)}${f.cat=='Passwords'?` <button class="b yel" onclick="reveal('${f.id}')">${pw?'Reveal':'Hide'}</button>`:''}<td>${hl(f.ctx)}`}).join('')}</table></div>${L.length>300?`<p>Showing 300 of ${L.length}. Use search to narrow.</p>`:''}`:`<p>${S.scanned_ok?'No matches found':'Run a scan to see results.'}</p>`}
+$('res').innerHTML=h+'</div>'}
+function tog(v){const q=($('rq')?.value||'').toLowerCase();S.findings.forEach(f=>{if((S.cat=='All Findings'||f.cat==S.cat)&&(!q||(f.path+f.cat+f.ctx+f.orig).toLowerCase().includes(q)))f.inc=v});render()}
+async function reveal(id){if(S.reveal.has(id))S.reveal.delete(id);else if(await ask('<p><b>Warning:</b> this shows the plaintext secret on screen.</p>'))S.reveal.add(id);render()}
+function rMask(){const p=planned(),fs=new Set(p.map(f=>f.fi)),cs=[...new Set(p.map(f=>f.cat))];
+$('mask').innerHTML=`<div class="card"><h2>Review</h2><p><b>${fs.size}</b> files to modify, <b>${p.length}</b> replacements, categories: ${esc(cs.join(', ')||'none')}.</p>${S.conflicts?`<p class="warn">⚠ ${S.conflicts} overlapping match(es) were resolved (longest match wins, ties to the category listed first). Losers are not applied.</p>`:''}
+<p class="warn">⚠ ${S.dir?'Overwriting originals is permanent unless backups are kept.':'This browser mode cannot overwrite files; masked copies will download.'}</p>
+<div class="row"><label>Write to <select id="mode"><option value="overwrite" ${S.dir?'':'disabled'}>Original files</option><option value="download" ${S.dir?'':'selected'}>Download masked copies</option></select></label><label><input type="checkbox" id="bak" checked> Create backup first</label><label>Backup name <select id="bn"><option value="bak">file.ext.bak</option><option value="ts">file.ext.timestamp.bak</option></select></label><label><input type="checkbox" id="cont" checked> Continue if a file fails</label></div>
+<p>Line endings and UTF-8 BOM are preserved. Each file is written once, so a failure leaves that file untouched.</p>
+<div class="row">${btn('Apply Masking','applyMask()',!p.length)}${btn('Rescan folder','rescan()',!S.dir,'s')}</div></div>`}
+async function rescan(){if(S.dir){reset();await walk(S.dir,'');render();doScan()}}
+function rRep(){const s=repSum(),n=S.findings.length;
+$('rep').innerHTML=`<div class="card"><h2>Audit report</h2><div class="row"><label><input type="checkbox" id="orig"> Include original values (plaintext, off by default)</label>${btn('CSV',"exportRep('csv')",!n)}${btn('JSON',"exportRep('json')",!n,'s')}${btn('HTML',"exportRep('html')",!n,'s')}${btn('Print','window.print()',!n,'s')}</div>
+<table>${Object.entries(s).map(([k,v])=>`<tr><th>${esc(k)}<td>${esc(Array.isArray(v)?v.join('; '):v)}`).join('')}</table></div>
+<div class="card wrap"><table><tr><th>ID<th>File<th>Line<th>Category<th>Original<th>Masked<th>Status<th>Error${S.findings.slice(0,200).map(f=>`<tr><td>${f.id}<td>${esc(f.path)}<td>${f.ln}<td>${esc(f.cat)}<td>[REDACTED — ${f.orig.length} characters]<td>${esc(f.masked)}<td class="${f.status}">${f.status}<td>${esc(f.err)}`).join('')}</table></div>`}
+function render(){$('hF').textContent=S.folder;$('hD').textContent=S.defName?`${S.src.toUpperCase()}: ${S.defName}`:'none';
+$('nav').innerHTML=TABS.map(([id,l],i)=>`<button role="tab" style="--t:${PAL[i]}" aria-selected="${id==S.rtab}" onclick="showTab('${id}')">${l}${id=='res'&&S.findings.length?`<span class="nb r">${S.findings.length}</span>`:id=='mask'&&planned().length?`<span class="nb ${S.applied?'g':'a'}">${planned().length}</span>`:''}</button>`).join('');
+({dash:rDash,defs:rDefs,res:rRes,mask:rMask,rep:rRep,enc:rEnc,help:()=>{}})[S.rtab]()}
+/* ---- Encryption ---- */
+const APP_KEY_HEX='a8c50f6f2e664e51e7edbe997ff134143db030da406fdb81eed5f0f5c820ae8a7fb74cfc61a564dbf57849a2c4be69a7a7948523ec5cabff2a04dea5e133ca93';/* 512-bit application secret; replace to rotate */
+const KEYB=Uint8Array.from(APP_KEY_HEX.match(/../g).map(x=>parseInt(x,16)));let KID='';
+const b64=u=>{let s='';for(let i=0;i<u.length;i+=8192)s+=String.fromCharCode(...u.subarray(i,i+8192));return btoa(s)},unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)),isEnc=o=>!!o&&o.format==='SDMU-ENC';
+const hex=u=>[...u].map(x=>x.toString(16).padStart(2,'0')).join(''),cryptoOK=()=>!!(window.crypto&&crypto.subtle);
+async function keyId(){if(!KID)KID=hex(new Uint8Array(await crypto.subtle.digest('SHA-256',KEYB)).slice(0,6));return KID}
+async function dkey(salt,use){const m=await crypto.subtle.importKey('raw',KEYB,'HKDF',false,['deriveKey']);return crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-512',salt,info:new TextEncoder().encode('SDMU-AES-256-GCM')},m,{name:'AES-GCM',length:256},false,[use])}
+const aad=id=>new TextEncoder().encode('SDMU-ENC|1|AES-256-GCM|HKDF-SHA-512|'+id);
+async function encJSON(text){if(!cryptoOK())throw new Error('Web Crypto is unavailable; open the app via https:// or http://localhost');const id=await keyId(),salt=crypto.getRandomValues(new Uint8Array(32)),iv=crypto.getRandomValues(new Uint8Array(12)),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:aad(id)},await dkey(salt,'encrypt'),new TextEncoder().encode(text)));
+return JSON.stringify({format:'SDMU-ENC',version:1,alg:'AES-256-GCM',kdf:'HKDF-SHA-512',keyId:id,salt:b64(salt),iv:b64(iv),ciphertext:b64(ct)},null,2)}
+async function decEnv(o){if(!cryptoOK())throw new Error('Web Crypto is unavailable; open the app via https:// or http://localhost');if(o.version!==1||o.alg!=='AES-256-GCM'||o.kdf!=='HKDF-SHA-512')throw new Error('Unsupported encryption header');
+const id=await keyId();if(o.keyId!==id)throw new Error('This file was encrypted with a different application key (key ID '+o.keyId+', this app has '+id+')');
+try{return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(o.iv),additionalData:aad(id)},await dkey(unb64(o.salt),'decrypt'),unb64(o.ciphertext)))}catch{throw new Error('Decryption failed: the file was modified or is corrupt')}}
+async function encLoaded(){if(!S.defs)return toast('Load definitions first','warn');const e=validate(S.defs);if(e.length)return toast(e.join('; '),'err');try{dl('SensitiveDefinitions.enc.json',await encJSON(JSON.stringify(S.defs,null,2)),'application/json');toast('Encrypted definitions exported')}catch(x){toast(x.message,'err')}}
+function genKey(){const k=hex(crypto.getRandomValues(new Uint8Array(64)));ask(`<h3>New 512-bit key</h3><p>To rotate, replace the value of <code>APP_KEY_HEX</code> in index.html with this. Files encrypted with the current key can then no longer be opened.</p><textarea readonly rows="4" onfocus="this.select()">${k}</textarea>`)}
+function rEnc(){$('enc').innerHTML=`<div class="card"><h2>Encrypt and decrypt definitions</h2><p>Protect your JSON definitions with AES. Encrypted files carry a header, so loading one on <b>Source Definitions</b> or here decrypts it automatically.</p>
+<div class="row">${btn('Encrypt loaded definitions','encLoaded()',!S.defs)}${btn('Encrypt a JSON file…',"$('fenc').click()")}${btn('Load encrypted JSON',"$('fjson').click()")}${btn('Decrypt file to plain JSON…',"$('fdec').click()")}</div></div>
+<div class="card"><h2>Encryption details</h2><table>
+<tr><th>Cipher<td>AES-256-GCM (authenticated; tampering is detected)<tr><th>Secret<td>512-bit key stored inside this application (never uploaded)
+<tr><th>Key derivation<td>HKDF-SHA-512 turns the 512-bit secret and a random 256-bit salt into a unique AES-256 key for each file
+<tr><th>Key ID<td><b id="kid">…</b> (SHA-256 fingerprint; the key itself is not shown)<tr><th>Web Crypto<td>${cryptoOK()?'✔ available':'✖ unavailable; use https:// or http://localhost'}
+<tr><th>File header<td><code>format: SDMU-ENC, version: 1, alg, kdf, keyId, salt, iv, ciphertext</code></table>
+<p class="warn">⚠ AES supports keys up to 256 bits, so the 512-bit secret is used as key material rather than as a single AES key. The secret is embedded in this app file: anyone holding this exact file can decrypt your encrypted definitions, so keep the app file as private as the data it protects.</p>
+<div class="row">${btn('Generate replacement key','genKey()')}</div></div>`;
+if(cryptoOK())keyId().then(i=>{const e=$('kid');if(e)e.textContent=i})}
+/* ---- Inputs / sample ---- */
+$('fdir').onchange=e=>fromInput(e.target.files,true);$('ffil').onchange=e=>fromInput(e.target.files,false);
+$('fcsv').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{setDefs(defsFromCSV(await f.text()),'csv',f.name)}catch(x){toast('Invalid CSV: '+x.message,'err')}};
+$('fjson').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{let j=JSON.parse(await f.text()),dec='';if(isEnc(j)){j=JSON.parse(await decEnv(j));dec=' (decrypted)'}
+if(!Array.isArray(j.categories))throw new Error('Missing "categories" array');setDefs(j.categories.map(c=>norm(c,false)),'json',f.name+dec)}catch(x){toast('Could not load JSON: '+x.message,'err')}};
+$('fenc').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const t=await f.text(),j=JSON.parse(t);if(isEnc(j))throw new Error('File is already encrypted');dl(f.name.replace(/\.json$/i,'')+'.enc.json',await encJSON(JSON.stringify(j,null,2)),'application/json');toast('Encrypted copy exported')}catch(x){toast(x.message,'err')}};
+$('fdec').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const j=JSON.parse(await f.text());if(!isEnc(j))throw new Error('File header says it is not encrypted');const t=await decEnv(j);if(await ask('<p><b>Warning:</b> the exported file will be plain, unencrypted JSON.</p>'))dl(f.name.replace(/\.enc\.json$|\.json$/i,'')+'.plain.json',t,'application/json')}catch(x){toast(x.message,'err')}};
+function loadSample(){const names=Object.keys(D);setDefs(names.map(n=>norm({name:n},'s')),'csv','Sensitive.csv (sample)');
+reset();S.dir=null;S.folder='sample';const log=`2026-10-02 14:35:11 INFO Connection opened: Server=SQLPROD01;Database=FinanceDB;UserID=DOMAIN\\svc_finance;Password=VerySecret123;Port=1433;IP=10.10.20.15\n2026-10-02 14:35:12 WARN Share \\\\fileserver01\\finance\\2026 slow; customer_id=C-4471 Example Customer Ltd\n`;
+addFile({name:'application.log',path:'application.log',file:new File([log],'application.log',{type:'text/plain'})}).then(()=>render())}
+render();if(!window.showDirectoryPicker)toast('File System Access API not supported: fallback mode (download masked copies).','warn');
+</script></body></html>
