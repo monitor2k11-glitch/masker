@@ -1,0 +1,15 @@
+Category,Description,Enabled,MatchMode,CaseSensitive,Values,Patterns
+Server Names,Server hostnames and machine names,true,exact,false,SQLPROD01|APP-SERVER-02|FILESRV01|BATCH-NODE-07,
+IP Address,IPv4 addresses,true,regex,false,,
+Port Number,Ports in context (port=1433),true,contextual,false,,
+Service Accounts,Service and system accounts,true,regex,false,,
+Passwords,Secrets in key/value entries,true,regex,false,,
+UserIDs,User IDs in context,true,contextual,false,,
+Licence Number,Licence keys,true,contextual,false,,
+Database Names,Database names in context,true,contextual,false,FinanceDB|HRPortal,
+DB Instance Names,SERVER\INSTANCE names,true,regex,false,,
+Customer Name,Known customer names only,true,exact,false,Example Customer Ltd|Contoso Retail Group,
+Customer ID,Customer IDs in context,true,contextual,false,,
+Account Number,Account numbers in context,true,contextual,false,,
+Sensitive Data,User-defined keywords,true,exact,false,Project Falcon|Q3 Merger Plan,
+Shared Drive Path,UNC paths and mapped drives,true,regex,false,,"\\\\[\w.$-]+\\[^\s;,""']+|\b[Zz]:\\[^\s;,""']+"
